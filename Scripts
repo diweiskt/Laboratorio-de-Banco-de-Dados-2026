@@ -1,0 +1,829 @@
+-- ============= Script Aula 01 - 03.03.2026 =============
+
+
+-- Exercícios:
+-- 1- Listar consultas realizadas após 02/02/2026.
+  SELECT *
+  FROM   consulta
+  WHERE  status = 'realizada' and data > '02/02/2026';
+
+-- 2- Listar consultas com valor entre 250 e 350.
+  SELECT data,hora,valor
+  FROM   consulta
+  WHERE  valor between 250 and 350;
+
+-- 3- Buscar pacientes cujo nome começa com 'M'.
+    SELECT nome
+    FROM   paciente
+    WHERE  nome like 'M%' or nome like 'm%';
+    --ou
+    --WHERE  UPPER(nome) like 'M%'
+   
+-- 4- Listar procedimentos que contenham a palavra 'Joelho'.
+  SELECT nome_procd
+  FROM   procedimento
+  WHERE  nome_procd like '%Joelho%';
+
+-- 5- Listar pagamentos feitos entre 01/02/2026 e 03/02/2026.
+  SELECT   *
+  FROM    pagamento
+  WHERE   data_pagto >= '01/02/2026' and
+          data_pagto <= '03/02/2026';
+
+  SELECT count(*),avg(valor),max(valor),min(valor),sum(valor)
+  FROM   consulta;
+
+-- 6- Listar a soma dos pagamentos do ano de 2026.
+  SELECT sum(valor_pagto)
+  FROM   pagamento
+  --WHERE  data_pagto >= '01/01/2026' and 
+  --       data_pagto <= current_date
+  -- ou       
+  WHERE  extract (year from data_pagto) = 2026;     
+
+-- 7- Listar quantas consultas foram realizadas no mês de fevereiro, independente do ano
+  SELECT count(*) 
+  FROM   consulta
+  WHERE  extract (month from data) = 02 and
+         status = 'realizada';
+
+-- 8- Listar os pacientes e médicos de cada uma das consultas
+  SELECT paciente.nome, medico.nome
+  FROM   paciente INNER JOIN consulta ON 
+         paciente.id_paciente  = consulta.id_paciente
+         INNER JOIN medico ON  
+          medico.id_medico = consulta.id_medico;
+
+
+-- ============= Script Aula 02 - 10.03.2026 =============
+
+
+-- Exercícios:
+-- continuação
+
+-- 9- Listar consultas realizadas (status = 'realizada')
+ -- paciente, data e valor
+   SELECT  p.nome, c.data, c.valor, c.status
+   FROM    paciente p inner join consulta c ON
+           p.id_paciente = c.id_paciente
+   WHERE   lower(c.status) = 'realizada';
+ 
+-- 10- Listar procedimentos realizados com nome do paciente
+  -- nome do paciente e do procedimento
+  SELECT  pr.id_procedimento, p.nome, pr.nome_procd   
+    FROM  procedimento pr inner join consulta c ON
+          pr.id_consulta = c.id_consulta inner join paciente p ON
+           p.id_paciente = c.id_paciente;
+      
+-- 11- Listar pagamentos com nome do paciente
+   -- id o valor do pagto
+   SELECT  p.nome, pg.valor_pagto
+   FROM    paciente p inner join consulta c ON
+           p.id_paciente = c.id_paciente INNER JOIN pagamento pg ON
+           pg.id_consulta = c.id_consulta;
+      
+-- 12- Listar médico e sua especialidade. Liste 'todas' as especialidades
+   SELECT m.nome as MEDICO, e.nome as ESPECIALIDADE
+   FROM   medico m inner join medico_Especialidade me ON
+          m.id_medico = me.id_medico
+          RIGHT join especialidade e ON me.id_especialidade = e.id_especialidade
+  -- WHERE  me.id_especialidade is null
+
+-- INSERT INTO ESPECIALIDADE VALUES (6, 'Geriatria', 365);
+
+-- 13- Total pago por paciente (mostrar apenas quem pagou mais de 400)
+  SELECT  p.nome, sum(pg.valor_pagto),count(pg.id_pagamento)
+  FROM    paciente p inner join consulta c ON
+          p.id_paciente = c.id_paciente INNER JOIN pagamento pg ON
+          pg.id_consulta = c.id_consulta
+ group by p.nome
+ having  sum(pg.valor_pagto) > 400;
+ 
+ --  SELECT * from pagamento
+ --  insert into pagamento values(6,'cartao','01/03/2026',450,1);
+ 
+-- 14- Quantidade de consultas por médico (mostrar apenas quem realizou mais de 1 consulta)
+  SELECT   m.nome, count(c.id_consulta) AS total_consultas
+  FROM     consulta c inner join medico m ON c.id_medico = m.id_medico
+  GROUP BY m.nome
+  HAVING COUNT(c.id_consulta) > 1;
+  
+-- 15 - Faturamento total por médico (mostrar acima de 300)
+ SELECT     m.nome, SUM(pa.valor_pagto) AS faturamento_total
+ FROM       PAGAMENTO pa inner join CONSULTA c ON pa.id_consulta = c.id_consulta
+            inner join MEDICO m ON c.id_medico = m.id_medico
+ GROUP BY   m.nome
+ HAVING SUM(pa.valor_pagto) > 300;
+ --------------------------------------------------
+   -- Exemplos PL/SQL
+   -- Bloco anônimo
+   DECLARE -- seção declaração
+    varNome INT; -- VARCHAR2(25);    
+   BEGIN -- seção executável
+     varNome := 'UPF';
+     DBMS_OUTPUT.PUT_LINE('Resultado => '|| varNome);
+     EXCEPTION -- seção de exceções
+      WHEN OTHERS THEN
+       DBMS_OUTPUT.PUT_LINE('Opa, temos um problema ');
+   END;
+   
+   -- SET SERVEROUTPUT ON; -- ligar o funcionamento do comando DBMS
+   
+
+-- ============= Script Aula 03 - 17.03.2026 =============
+
+
+-- Exemplos PL/SQL
+   
+   -- Bloco anônimo
+   DECLARE -- seção declaração
+    varNome VARCHAR2(25);    
+   BEGIN -- seção executável
+     varNome := 'UPF';
+     DBMS_OUTPUT.PUT_LINE('Resultado => '|| varNome);
+     EXCEPTION -- seção de exceções
+      WHEN OTHERS THEN
+       DBMS_OUTPUT.PUT_LINE('Opa, temos um problema ');
+   END;
+   
+   -- SET SERVEROUTPUT ON; -- ligar o funcionamento do comando DBMS
+   
+   -- Exemplo IF
+   DECLARE
+    varNome  VARCHAR2(30);
+    varIdade INT;
+    BEGIN 
+       varNome := 'Manuela';
+       varIdade := 15;
+       IF (varIdade > 18) THEN
+        DBMS_OUTPUT.put_LINE('� MAIOR de idade '|| varNome || ' - ' || varIdade);
+       ELSIF (varIdade < 18) THEN
+        DBMS_OUTPUT.put_LINE('� menor de idade '|| varNome || ' - ' || varIdade);
+       ELSE
+        DBMS_OUTPUT.put_LINE(' tem 18 anos '|| varNome || ' - ' || varIdade);
+       END IF;
+    END; -- final do bloco   
+
+   -- Exemplo LOOP
+   DECLARE
+    varNome  VARCHAR2(30);
+    varIdade INT;     i INT;
+    BEGIN 
+       varNome := 'Manuela';
+       varIdade := 18;
+       IF (varIdade >= 18) THEN
+          FOR i in 1..2 LOOP
+            DBMS_OUTPUT.put_LINE(i || 'x � MAIOR de idade!');
+          END LOOP;  
+       ELSE   
+          DBMS_OUTPUT.put_LINE(i || '� MENOR de idade!');
+       END IF;
+    END; -- final
+    
+   -- Exemplo de PROCEDURE
+ CREATE or replace PROCEDURE p_exemplo1(vNome VARCHAR2)IS
+ BEGIN
+   IF vNome is not null THEN
+    DBMS_OUTPUT.put_LINE('Ol� => '|| vNome);
+   ELSE 
+    DBMS_OUTPUT.put_LINE('Error - informe um nome ');
+   END IF; 
+  END p_exemplo1;
+
+  -- Chamando o procedimento
+  EXECUTE p_exemplo1('Henry');
+
+ -- Faça um procedimento que recebido o código e um % de CH atualize na tabela Especialidade
+   CREATE or replace PROCEDURE p_mudaCH (vId INT, vPer NUMBER) IS
+   BEGIN
+      UPDATE Especialidade
+      SET    ch = ch + (ch * vPer/100)
+      WHERE  id_especialidade = vId;  
+   END p_mudaCH;
+
+  EXEC p_mudaCH(3,10);    -- Select * From Especialidade
+  
+-- Exercícios
+-- 1- Faça um procedure PL/SQL para atualizar o status de uma consulta.
+   CREATE or replace PROCEDURE p_q1 (vId IN CONSULTA.id_consulta%TYPE, 
+                                     vStatus IN CONSULTA.status%TYPE) IS                               
+    varStatusBanco CONSULTA.status%TYPE;                                 
+   BEGIN
+      -- verifica Status que está no Banco
+      SELECT  status    INTO varStatusBanco
+      FROM    Consulta 
+      WHERE   id_consulta = vId;
+      -- testa se o Status é diferente da opção de alteração
+      IF (varStatusBanco <> 'realizada') and (varStatusBanco <> vStatus) THEN
+        UPDATE  Consulta  
+        SET     status = vStatus
+        WHERE   id_consulta = vId;
+      ELSE
+        DBMS_OUTPUT.put_LINE('Opa, o status é o mesmo, tem erro aí!!!');
+      END IF;  
+   END p_q1;
+   
+   EXEC p_q1(1,'agendada');   -- Select * From consulta
+   
+
+-- ============= Script Aula 04 - 24.03.2026 =============
+
+
+-- Exercícios
+-- -- 1- Faça um procedure PL/SQL para atualizar o status de uma consulta.
+   CREATE or replace PROCEDURE p_q1 (vId IN CONSULTA.id_consulta%TYPE, 
+                                     vStatus IN CONSULTA.status%TYPE) IS                               
+    varStatusBanco CONSULTA.status%TYPE;                                 
+   BEGIN
+      -- verifica Status que está no Banco
+      SELECT  status    INTO varStatusBanco
+      FROM    Consulta 
+      WHERE   id_consulta = vId;
+      -- testa se o Status é diferente da opção de alteração
+      IF (varStatusBanco <> 'realizada') and (varStatusBanco <> vStatus) THEN
+        UPDATE  Consulta  
+        SET     status = vStatus
+        WHERE   id_consulta = vId;
+      ELSE
+        DBMS_OUTPUT.put_LINE('Opa, o status é o mesmo, tem erro aí!!!');
+      END IF;  
+   END p_q1;
+   
+   EXEC p_q1(1,'agendada');   -- Select * From consulta
+   
+-- 2- Faça um procedure PL/SQL para cadastrar uma nova consulta, informando paciente, médico, data, hora e valor. O status inicial será definido como 'agendada'.
+
+  CREATE OR REPLACE PROCEDURE p_q2 (
+    vId_consulta IN CONSULTA.id_consulta%TYPE,
+    vData        IN CONSULTA.data%TYPE,
+    vHora        IN CONSULTA.hora%TYPE,
+    vValor       IN CONSULTA.valor%TYPE,
+    vObs         IN CONSULTA.obs%TYPE,
+    vId_paciente IN CONSULTA.id_paciente%TYPE,
+    vId_medico   IN CONSULTA.id_medico%TYPE
+) IS
+BEGIN
+   INSERT INTO Consulta(id_consulta,data,hora,status,valor,obs,id_paciente,id_medico) 
+                 VALUES(vId_consulta,vData,vHora,'agendada',vValor,vObs,vId_paciente,
+                        vId_medico);
+
+END p_q2;
+    
+    -- EXECUTE p_q2(6,'24/03/2026','20h',300,'nada a descrever',4,2);
+    -- Select * from Consulta Where id_consulta = 6;
+ 
+ -- 3- Faça um procedure PL/SQL para agendar uma consulta, garantindo que:
+ -- - O paciente e o médico existem
+ -- - O médico não possui outra consulta no mesmo horário
+ -- - O status inicia como agendada
+ -- - Em caso de erro, emita uma Exception com uma mensagem
+
+  CREATE OR REPLACE PROCEDURE p_q3 (
+    vId_consulta IN CONSULTA.id_consulta%TYPE,
+    vData        IN CONSULTA.data%TYPE,
+    vHora        IN CONSULTA.hora%TYPE,
+    vValor       IN CONSULTA.valor%TYPE,
+    vObs         IN CONSULTA.obs%TYPE,
+    vId_paciente IN CONSULTA.id_paciente%TYPE,
+    vId_medico   IN CONSULTA.id_medico%TYPE
+) IS
+  vP   INT;     vM   INT; vH   INT;
+BEGIN
+     SELECT count(*) INTO vP  FROM   paciente  WHERE id_paciente = vId_paciente;
+     IF (vp = 0) THEN
+        raise_application_error(-20001,'Esse Paciente não existe!');
+     END IF;
+     SELECT count(*) INTO vM  FROM medico  WHERE id_medico = vId_medico;
+     IF (vp = 0) THEN
+        raise_application_error(-20001,'Esse MÉDICO não existe!');
+     END IF;
+     
+    -- Verifica disponibilidade de horário
+    SELECT COUNT(*) INTO vH
+    FROM   Consulta
+    WHERE  id_medico = vId_medico  AND data = vData  AND hora = vHora
+           AND status = 'agendada';
+
+    IF (vH = 1) THEN
+        raise_application_error(-20002,'MÉDICO não possui agenda nesta data e hora!');
+     END IF; 
+     
+    INSERT INTO Consulta(id_consulta,data,hora,status,valor,obs,id_paciente,id_medico) 
+                VALUES(vId_consulta,vData,vHora,'agendada',vValor,vObs,vId_paciente,
+                        vId_medico);
+     
+END p_q3;       -- EXECUTE p_q3(7,'24/03/2026','14h',7500,'-',2,5);
+
+  -- Exemplo de FUNCTIONS
+    -- Faça uma função que passado o número do procedimento, retorne a descrição deste procedimento
+ CREATE or replace FUNCTION f_exemplo(vNum NUMBER)
+   RETURN VARCHAR IS  
+   vDesc   VARCHAR2(40);
+   BEGIN
+       SELECT descricao INTO vDesc FROM procedimento WHERE id_procedimento = vNum;
+    RETURN vDesc;
+   END f_exemplo;
+
+   -- SELECT f_exemplo(3) FROM Dual; -- executando uma função
+
+
+-- 4- Faça uma function PL/SQL para retornar a quantidade de consultas de um médico em um período (data início - data fim)
+   CREATE or replace FUNCTION f_q4(vIdMedico MEDICO.id_medico%TYPE,
+                                   vDataInicio DATE, vDataFim DATE)
+    RETURN NUMBER  IS
+     v_total  NUMBER;
+    BEGIN
+        SELECT COUNT(*)  INTO v_total
+        FROM   Consulta  WHERE id_medico = vIdMedico
+               AND data BETWEEN vDataInicio AND vDataFim;
+     RETURN v_total;          
+    END f_q4;    -- SELECT f_q4(2,'01/02/2026','11/03/2026') FROM Dual;
+
+
+-- ============= Script Aula 05 - 31.03.2026 =============
+
+
+-- Exemplos de Exceção - Programada
+    -- organizada na seção de EXCEPTION
+
+ -- 1- Faça um procedure PL/SQL para agendar uma consulta, garantindo que:
+ -- - O paciente e o médico existem
+ -- - O médico não possui outra consulta no mesmo horário
+ -- - O status inicia como agendada
+ -- - Em caso de erro, emita uma Exception com uma mensagem
+
+  CREATE OR REPLACE PROCEDURE p_q3b (
+    vId_consulta IN CONSULTA.id_consulta%TYPE,
+    vData        IN CONSULTA.data%TYPE,
+    vHora        IN CONSULTA.hora%TYPE,
+    vValor       IN CONSULTA.valor%TYPE,
+    vObs         IN CONSULTA.obs%TYPE,
+    vId_paciente IN CONSULTA.id_paciente%TYPE,
+    vId_medico   IN CONSULTA.id_medico%TYPE
+) IS
+  vP   INT;     vM   INT; vH   INT;
+  erro1 EXCEPTION; erro2 EXCEPTION; erro3 EXCEPTION;
+  
+BEGIN
+     SELECT count(*) INTO vP  FROM   paciente  WHERE id_paciente = vId_paciente;
+     IF (vP = 0) THEN
+        raise erro1;
+     END IF;
+     SELECT count(*) INTO vM  FROM medico  WHERE id_medico = vId_medico;
+     IF (vp = 0) THEN
+        raise erro2;
+     END IF;
+     
+    -- Verifica disponibilidade de horário
+    SELECT COUNT(*) INTO vH
+    FROM   Consulta
+    WHERE  id_medico = vId_medico  AND data = vData  AND hora = vHora
+           AND status = 'agendada';
+
+    IF (vH = 1) THEN
+        raise erro3;
+     END IF; 
+     
+    INSERT INTO Consulta(id_consulta,data,hora,status,valor,obs,id_paciente,id_medico) 
+                VALUES(vId_consulta,vData,vHora,'agendada',vValor,vObs,vId_paciente,
+                        vId_medico);
+      -- seção de tratamento de exceções                  
+    EXCEPTION
+        WHEN erro1 THEN
+          raise_application_error(-20001,'Esse Paciente não existe!');          
+        WHEN erro2 THEN
+          raise_application_error(-20001,'Esse MÉDICO não existe!');
+        WHEN erro3 THEN
+          raise_application_error(-20002,'MÉDICO não possui agenda nesta data e hora!');     
+END p_q3b;       
+
+    EXECUTE p_q3b(20,'24/03/2026','14h',7500,'-',2,5);
+    
+ -- 2- Faça uma function PL/SQL para retornar o valor total faturado por um médico, 
+-- considerando:
+ -- - apenas consultas com status 'realizada'
+ -- - soma dos pagamentos feitos
+ -- - por período (data inicial e final)
+ -- * Utiliza JOIN entre as tabelas CONSULTA, PAGAMENTO e MEDICO
+ 
+   CREATE or replace FUNCTION f_fatura(varM CONSULTA.id_medico%TYPE,
+                                       varPi CONSULTA.data%TYPE, 
+                                       varPf CONSULTA.data%TYPE)
+   RETURN NUMBER IS
+      varFaturamento  NUMBER;
+   BEGIN    
+        SELECT SUM(p.valor_pagto)  INTO varFaturamento
+        FROM Consulta c inner join Pagamento p ON c.id_consulta = p.id_consulta
+             inner join Medico m ON c.id_medico = m.id_medico
+        WHERE c.id_medico = varM AND c.status = 'realizada'
+              AND c.data BETWEEN varPi AND varPf;
+  
+       RETURN varFaturamento;  
+   END f_fatura;
+ 
+      -- Executa a Função
+      SELECT f_fatura(5,'02/02/2025','31/03/2026') FROM dual;
+      -- Select * from pagamento
+
+
+-- ============= Script Aula 06 - 07.04.2026 =============
+
+
+-- Exercícios (Procedure que chama função)
+-- 1- Faça um procedimento que apresente/print disponibilidade de um médico de acordo 
+-- com uma data e horário. Faça essa verificação de disponibilidade em uma FUNÇÃO.
+
+ CREATE or replace FUNCTION f_disponibilidadeMedico(varID MEDICO.id_medico%TYPE,
+                                                    varData CONSULTA.data%TYPE,
+                                                    varHor  CONSULTA.hora%TYPE)
+ RETURN VARCHAR IS
+     varAgenda  NUMBER;
+     varResult  VARCHAR2(4);
+ BEGIN    
+    SELECT count(*) INTO varAgenda
+    FROM   medico m inner join consulta c ON
+           m.id_Medico = c.id_medico
+    WHERE  m.id_medico = varID and c.data = varData and c.hora = varHor;
+    IF(varAgenda = 1) THEN
+      varResult := 'NÃO';
+    ELSE  
+      varResult := 'SIM';
+    END IF;  
+    RETURN varResult;   
+ END;
+
+CREATE OR REPLACE PROCEDURE p_disponibilidade (vMedico MEDICO.id_medico%TYPE,
+                                               vData CONSULTA.data%TYPE,
+                                               vHor CONSULTA.hora%TYPE)
+IS
+  varAgenda  VARCHAR2(4);
+BEGIN
+   varAgenda := f_disponibilidadeMedico(vMedico,vData,vHor); -- chama FUNÇÃO
+   
+   IF (varAgenda = 'SIM') THEN
+     DBMS_OUTPUT.PUT_LINE('Pode agendar, tem disponiblidade!');
+   ELSE
+     DBMS_OUTPUT.PUT_LINE('SEM agenda para o período informado!');
+   END IF;
+END;
+    
+    -- SET SERVEROUTPUT ON;  -- Select * from consulta
+    
+    -- EXEC  p_disponibilidade(2,'24/03/2026','20h');
+
+-- 2- Faça um procedimento que passado os dados da consulta, registre um pagamento.
+-- - O valor pago deve ser calculado em uma FUNÇÃO, com a soma da Consulta + o valor do Procedimento se houver.
+   
+  CREATE or replace FUNCTION f_calcula(varID NUMBER) 
+  RETURN NUMBER
+  IS
+   SOMATORIO NUMBER;
+  BEGIN    
+     SELECT (sum(c.valor)+sum(p.valor_procd)) INTO SOMATORIO
+     FROM   consulta c inner join procedimento p ON
+            c.id_consulta = p.id_consulta
+     WHERE  c.id_consulta = varID;       
+     RETURN SOMATORIO;
+  END; 
+   -- select * from pagamento
+   CREATE or replace PROCEDURE p_registraPagto(vID PAGAMENTO.id_pagamento%TYPE,
+                                               vForma PAGAMENTO.forma_pagto%TYPE,
+                                               vCons PAGAMENTO.id_consulta%TYPE)IS
+    varResult PAGAMENTO.valor_pagto%TYPE;
+   BEGIN
+       varResult := f_calcula(vCons);
+       INSERT INTO pagamento(id_pagamento,forma_pagto,data_pagto,
+                             valor_pagto,id_consulta)
+          VALUES(200,vForma,current_date,varResult,vCons);   
+   END;
+    
+    -- EXEC p_registraPagto(200,'pix',2);
+    -- Select * from pagamento
+   
+   
+   -- CRIAÇÃO DE SEQUÊNCIAS
+   CREATE SEQUENCE seq_clinica
+    start with 1
+    increment by 1
+    maxvalue 999
+    nocycle;   -- quando chegar ao limite máximo da sequência não volta ao início.
+   
+     CREATE TABLE Pessoa (id NUMBER, nome VARCHAR2(20));
+   
+    INSERT INTO Pessoa(id, nome) VALUES(seq_clinica.nextval,'nova Pessoa');
+   
+     -- DROP SEQUENCE seq_clinica;  -- exclui a sequência
+     
+        
+     -- SELECT seq_clinica.CURRVAL FROM DUAL; -- verificar o número atual da sequência
+   
+   
+ CREATE SEQUENCE teste
+  START WITH 1
+  INCREMENT BY 1
+  MINVALUE 1
+  MAXVALUE 99
+  NOCACHE
+  NOCYCLE;
+
+  CREATE table Pessoa(id INT,nome VARCHAR2(20))
+  
+INSERT INTO Pessoa (id, nome)
+VALUES (teste.NEXTVAL, 'Nova Pessoa');
+
+
+-- ============= Script Aula 07 - 14.04.2026 =============
+
+
+-- Faça um procedure para armazenar em um CURSOR o id, status da consulta e 
+-- o nome e a descrição do procedimento que a consulta gerou. Depois recupere do CURSOR 
+-- e apresente o id e a descrição dos procedimentos, apenas das consultas realizadas.
+
+   CREATE or replace PROCEDURE p_c1 IS
+     CURSOR c1 IS
+               SELECT    c.id_consulta,c.status,p.nome_procd,p.descricao
+               FROM      consulta c inner join procedimento p ON
+                         c.id_consulta = p.id_consulta;
+                         
+     v_reg c1%ROWTYPE;  -- variável do mesmo tipo que o cursor que vai apontar para o conteúdo                  
+     BEGIN                    
+       OPEN c1;
+       LOOP
+         FETCH c1 INTO v_reg; 
+         EXIT WHEN c1%NOTFOUND;
+          IF (v_reg.status = 'realizada')THEN
+           DBMS_OUTPUT.PUT_LINE(v_reg.id_consulta || ' => ' || v_reg.descricao || ':'|| v_reg.status);
+          END IF; 
+       END LOOP;
+       CLOSE c1;
+     END;
+
+    -- SET SERVEROUTPUT ON;
+    -- EXEC p_c1;
+    
+-- Cursor FOR LOOP
+-- Forma simplificada (não precisa OPEN, FETCH, CLOSE)
+
+-- Faça um procedure para armazenar o nome dos médicos, suas respectivas Especialidades
+-- e a data de conclusão. Depois apresente o nome do médico e a data de conclusão
+-- apenas daqueles que finalizaram a especialidade depois de 2016
+CREATE or replace PROCEDURE p_c2 IS
+  CURSOR c2 IS
+         SELECT m.nome,e.nome as ESPECIALIDADE, me.dataConclusao
+         FROM   medico m inner join medico_Especialidade me ON
+                m.id_medico = me.id_medico inner join especialidade e ON
+                e.id_especialidade = me.id_especialidade;
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE('Medico   ----  Conclusão da Esp.');
+    FOR r IN c2 LOOP
+      IF r.dataConclusao > '31/12/2016' THEN
+        DBMS_OUTPUT.PUT_LINE(r.nome || ' - ' || r.dataConclusao);
+      END IF;
+    END LOOP;    
+  END;
+    
+     -- EXEC p_c2
+  
+  -- TRIGGER de auditoria
+    CREATE TABLE logFuncionario(
+     id  INT PRIMARY KEY,
+     valorConsulta NUMBER (10,2) ,
+     valorConsultaNovo NUMBER (10,2),
+     dataAlteracao   TIMESTAMP,
+     usuario  VARCHAR2(20)
+    );
+    
+     CREATE SEQUENCE x 
+      start with 1
+      increment by 1;
+   
+   CREATE or replace TRIGGER tg_auditaValor
+     AFTER UPDATE ON Consulta
+     FOR EACH ROW
+     WHEN (NEW.valor <> OLD.valor) -- condição / opcional
+     BEGIN
+       INSERT INTO logFuncionario(id,valorConsulta,valorConsultaNovo,dataAlteracao,usuario)
+                           VALUES(x.nextval,:OLD.valor,:NEW.valor,current_date,user);
+     END;
+   -- SELECT * FROM logFuncionario
+   -- SELECT * FROM Consulta
+   -- UPDATE Consulta SET valor = 216 WHERE id_consulta = 1; 
+  
+   -- ALTER TRIGGER tg_auditaValor DISABLE; -- desabilita o Trigger
+   -- ALTER TRIGGER tg_auditaValor ENABLE;
+
+-- Exemplo TRIGGER
+   
+   CREATE TABLE Mercadoria(
+    id NUMBER PRIMARY KEY,
+    nome VARCHAR2(20),
+    preco NUMBER(10,2),
+    qtdEstoque INT
+   ); 
+    CREATE TABLE VENDA (
+     id NUMBER PRIMARY KEY,
+     data  DATE,
+     valorVenda NUMBER(10,2),
+     numParcelas INT,
+     codMercadoria INT,
+     FOREIGN KEY(codMercadoria) REFERENCES Mercadoria(id)
+   );  -- drop table parcelas
+    
+   CREATE TABLE Parcelas(
+    id   NUMBER, 
+    idVenda NUMBER,
+    valorParcela NUMBER(10,2),
+    dataVenc  DATE,
+    FOREIGN KEY (idVenda) REFERENCES VENDA (id),
+    PRIMARY KEY(id,idVenda)
+   );
+
+  -- Faça um trigger que altera o status da Consulta para realizada, caso
+  -- encontre pagamento e se já passou a data da mesma.
+    -- Select * from consulta
+    -- Select * from pagamento
+    
+    -- SELECT c.id_consulta, p.data_pagto, c.status
+    -- FROM   pagamento p RIGHT join consulta c ON
+    --        p.id_Consulta = c.id_consulta
+    -- WHERE  c.data < current_date and p.data_pagto is null;       
+    
+    -- SELECT * FROM pagamento
+    -- INSERT INTO consulta VALUES(8,'13/04/2026','15:00','agendada',200,'Dor de Cabeça',2,3);
+
+
+-- ============= Script Aula 08 - 28.04.2026 =============
+
+
+--drop table produtos cascade constraints;    
+create table produtos (
+ codigo number not null,
+ descricao varchar2(20),
+ estoque number(7,2),
+ precounitario number(7,2),
+ primary key (codigo)
+);
+
+   insert into produtos values(1,'Computador',5,3700);
+   insert into produtos values(2,'SmartPhone',2,1299);
+   insert into produtos values(3,'MacBook',2,12000);
+   insert into produtos values(4,'Impressora',10,499.89);
+
+  --drop table vendas cascade constraints;  
+  CREATE TABLE vendas(
+   numero NUMBER PRIMARY KEY,
+   valorProduto NUMBER NOT NULL,
+   quantidade NUMBER,
+   data DATE,
+   parcelas NUMBER,   
+   codigoProduto NUMBER,
+   FOREIGN KEY (codigoProduto) REFERENCES produtos(codigo)
+  );
+ 
+ --  drop table parcelas cascade constraints; 
+   CREATE TABLE parcelas(
+   numero NUMBER,
+   valorParcela NUMBER NOT NULL,
+   dataVenc date NOT NULL,
+   dataPagto date,
+   nvenda NUMBER,
+   FOREIGN KEY (nvenda) REFERENCES vendas(numero),
+   PRIMARY KEY (numero,nvenda)
+);
+
+  CREATE or replace TRIGGER tg_geraParcelas
+  AFTER INSERT ON Vendas
+  FOR EACH ROW
+  DECLARE
+    varValorPar  NUMBER(10,2);
+    varData      DATE;
+  BEGIN
+    
+    --tem estoque suficiente para fazer a venda???
+    -- se tem
+     --  Atualiza o estoque ????    
+     
+     -- encontra o valor da Parcela  select * from vendas
+     varValorPar := (:NEW.valorProduto * :NEW.quantidade) / :NEW.parcelas;
+     -- pega data
+     varData := :NEW.data;
+     
+     FOR i IN 1..:NEW.parcelas LOOP
+      select add_months(varData,1) INTO varData From dual; -- add 1 m s a data
+      INSERT INTO Parcelas(numero,valorParcela,dataVenc,nvenda) 
+                  VALUES(i,varValorPar,varData,:NEW.numero);
+
+    END LOOP;               
+  END;
+  
+  
+  select * from produtos;
+  select * from vendas;
+  select * from parcelas;
+  INSERT INTO Vendas VALUES(50,12000,1,current_date,6,2);
+  INSERT INTO Vendas VALUES(51,1200,2,'10/04/2026',10,2);
+  
+  -- Estudo de caso
+  -- No caso de inserção de uma consulta com status realizada, gerar um pagamento
+  
+  CREATE OR REPLACE TRIGGER tg_pagtoConsulta
+   AFTER INSERT ON Consulta
+   FOR EACH ROW 
+   BEGIN     
+      IF (:NEW.status = 'realizada') THEN
+         INSERT INTO Pagamento(id_pagamento,data_pagto,valor_pagto,id_consulta)
+               VALUES(seq_clinica.nextval,current_date,:NEW.valor,:NEW.id_consulta);
+      END IF;      
+   END tg_pagtoConsulta;
+    
+   select * from consulta;
+   select * from pagamento;
+   INSERT INTO consulta VALUES(50,'28/04/2026','21:00','realizada',200,'sem dor',1,1);
+
+-- ============= Script Aula 08 - 19.05.2026 =============
+
+-- Aula sobre Administração de Banco de Dados
+
+SELECT current_database(); -- mostra o Banco de dados
+SELECT version(); -- mostra a versão do SGBD
+SELECT now(); -- mostra horario e data
+SELECT * FROM pg_user; -- mostra usuarios e seus dados
+
+-- Criação de Usuários
+CREATE USER ana password '123'; -- cria usuario ana com a senha 123
+CREATE USER anita password '456' valid UNTIL '19/05/2026 22:00:00'; -- cria usuario temporario anita com senha 456
+
+-- todos schemas do BD
+SELECT * FROM pg_catalog.pg_tables
+WHERE schemaname = 'public'
+order by schemaname,tablename;
+
+-- Concedendo Privilégios 
+GRANT select,insert,update ON cliente TO Ana;
+GRANT select(nome) ON cliente TO Anita;
+GRANT select,insert ON quarto,tipo_quarto TO Ana,Anita;
+
+GRANT select ON atendimento TO Ana;
+-- Tira privilégio 
+REVOKE select ON atendimento FROM Ana;
+
+-- 
+CREATE ROLE socio;
+CREATE ROLE gerente;
+CREATE USER Amelia password '789';
+ALTER ROLE socio USER Amelia;
+
+GRANT select,insert ON cliente, quarto TO socio;
+
+CREATE USER Alice password '101112' IN ROLE gerente;
+
+GRANT update ON hospedagem TO Ana WITH GRANT OPTION; -- Ana pode repassar esse privilégio
+
+SELECT * FROM pg_user;
+
+GRANT all privileges ON all tables IN Schema public TO Ana;
+REVOKE all privileges ON all tables IN Schema public FROM Ana;
+
+-- grupos/papeis e respectivos usuários
+SELECT groname,usename FROM pg_group,pg_user
+WHERE usesysid = any(grolist);
+
+ALTER ROLE socio user ana;
+
+-- grupos/papeis e suas permissões
+SELECT rolname, rolcreatedb FROM pg_roles;
+
+-- 1- Como DBA, crie os grupos/roles -papeis (Gerente, Camareira e Atendente). Depois crie 
+-- os respectivos usuários, conforme os papeis: Gerente (usuário: Ger); Camareira (usuário:
+-- Gover01); Atendente (usuários: user01 e user02).
+
+CREATE ROLE Gerente;
+CREATE ROLE Camareira;
+CREATE ROLE Atendente;
+
+CREATE USER Ger password '123' IN ROLE Gerente;
+CREATE USER Gover01 password '123' IN ROLE Camareira;
+CREATE USER user01 password '123' IN ROLE Atendente;
+CREATE USER user02 password '123' IN ROLE Atendente;
+
+-- 2- Crie uma política de segurança, concedendo autoridade aos seguintes os papéis:
+--	a) Conceder permissão para o papel Gerente acessar todas as tabelas e este conceder
+--	   as mesmas permissões para outros usuários
+--	b) Conceder permissão para o papel Atendente consultar, inserir e atualizar dados
+--	   das tabelas cliente, reserva, hospedagem, quarto e atendimento
+--	c) Conceder permissão para o papel Camareira consultar apenas os nomes dos clientes
+--	d) Conceder permissões e depois retira uma delas do usuário user02 (a seu critério)
+
+-- a)
+GRANT select ON * TO Gerente WITH GRANT OPTION; -- rever essa
+
+--b)
+GRANT select,insert,update ON cliente,reserva,hospedagem,quarto,atendimento TO Atendente;
+
+--c)
+GRANT select(nome) ON cliente TO Camareira;
+
+--d)
+GRANT select,insert ON cliente TO user02;
+REVOKE insert ON cliente FROM user02;
+
