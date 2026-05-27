@@ -827,3 +827,88 @@ GRANT select(nome) ON cliente TO Camareira;
 GRANT select,insert ON cliente TO user02;
 REVOKE insert ON cliente FROM user02;
 
+-- ============= Script Aula 09 - 26.05.2026 =============
+
+select * from hospedagem
+
+CREATE TABLE Usuarios(
+	id		SERIAL	PRIMARY KEY,
+	nome	VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE Dados(
+	id_numerico	INT,
+	id_literal	VARCHAR(32),
+	texto1	VARCHAR(40), texto2	VARCHAR(40), texto3	VARCHAR(40),
+	texto4	VARCHAR(40), texto5	VARCHAR(40), texto6	VARCHAR(40),
+	idUsuario	INT,
+	FOREIGN	KEY (idUsuario)	REFERENCES Usuarios(id)
+);
+
+---- Criando Procedure ----
+CREATE or replace PROCEDURE p_povoaUser(qtd INTEGER)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+	i INTEGER;
+	t_nome	INTEGER; -- tamanho do nome
+	varNome	VARCHAR(20);
+BEGIN
+
+	FOR i IN 1..qtd LOOP -- define o num de caracteres do nome
+		t_nome := floor(random()* 8 + 5);
+		varNome := '';
+		FOR j IN 1..t_nome LOOP -- sortear as letras para o nome
+			varNome := varNome || chr(floor(random()* 26 + 65)::INT);
+		END LOOP;
+		INSERT INTO Usuarios(nome) VALUES(varNome);
+	END LOOP;
+END;
+$$;
+-- executar o procedure
+CALL p_povoaUser (50000);
+-- testes
+SELECT count(*) FROM Usuarios;
+SELECT nome FROM Usuarios WHERE id = 5987;
+SELECT id,nome FROM Usuarios WHERE nome like 'A%'; -- 62 ms
+SELECT id,nome FROM Usuarios WHERE nome like 'A%' and id > 9098 and id < 18888; -- 52 ms
+SELECT id,nome FROM Usuarios WHERE nome like 'A%' or nome like '%T%' and id > 9098 and id < 18888; -- 74 ms
+
+-- Função para povoar a tabela Dados
+CREATE OR REPLACE FUNCTION f_povoaDados()
+RETURNS VOID AS $$
+DECLARE
+	varTexto VARCHAR(40);
+	i INTEGER;
+	t INTEGER;
+BEGIN
+	i := 1;		varTexto := 'Lab. de Banco de Dados';
+	SELECT max(id) INTO t FROM Usuarios;
+	LOOP
+		INSERT INTO Dados VALUES(i,MD5(i::TEXT),varTexto,varTexto,varTexto,
+							 varTexto,varTexto,varTexto,floor(random()* t + 1));
+		EXIT WHEN (i >= 1000000);
+			i := i + 1;
+	END LOOP;
+END;
+$$
+language plpgsql;
+-- executar a função
+SELECT f_povoaDados(); -- 11 segundos
+
+-- Otimizando
+--caso a
+SELECT id_literal FROM Dados WHERE id_numerico = 500; -- 173 ms // 42 ms
+--caso b
+SELECT * FROM Dados WHERE id_literal = MD5('34110'); -- 114 ms // 89 ms
+--caso c
+SELECT * FROM Dados WHERE id_numerico between 4900 and 20000; -- 161 ms // 89 ms
+--caso d
+SELECT u.nome, d.id_numerico, d.id_literal, d.texto4
+FROM Usuarios u inner join dados d ON u.id = d.idUsuario
+WHERE u.id = 44781; -- 201 ms // 106 ms //  96 ms
+
+CREATE INDEX idx1 ON dados(id_literal); -- reduz o tempo de exec das consultas
+	DROP INDEX idx1;
+CREATE INDEX idx2 ON dados(id_numerico);
+	DROP INDEX idx2;
