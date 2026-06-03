@@ -908,7 +908,113 @@ SELECT u.nome, d.id_numerico, d.id_literal, d.texto4
 FROM Usuarios u inner join dados d ON u.id = d.idUsuario
 WHERE u.id = 44781; -- 201 ms // 106 ms //  96 ms
 
-CREATE INDEX idx1 ON dados(id_literal); -- reduz o tempo de exec das consultas
+-- reduz o tempo de exec das consultas
+CREATE INDEX idx1 ON dados(id_literal);
 	DROP INDEX idx1;
 CREATE INDEX idx2 ON dados(id_numerico);
 	DROP INDEX idx2;
+
+-- ============= Script Aula 10 - 02.06.2026 =============
+
+-- Aula sobre Backup
+
+-- ======= no CMD ======
+--C:\Program Files\PostgreSQL\18\bin>cd C:\Program Files\PostgreSQL\18\bin
+
+--C:\Program Files\PostgreSQL\18\bin>pg_dump -h localhost -p 5432 -U postgres -d hospedaria -f c:\back\dadosBD.sql
+
+--C:\Program Files\PostgreSQL\18\bin>psql -U postgres -f "c:/back/dadosBD.sql" -d testeHospedaria
+-- ======= fim do CMD ======
+
+select count(*) from usuarios;
+select count(*) from dados;
+
+select count(*) from nota; -- 429628
+select count(*) from estoque; -- 1221151
+
+-- CASE 1
+SELECT dt_movimento, vl_unitario
+FROM estoque
+WHERE id_empresa = 1000;
+--tempo de exec antes e depois do idx123 e idx312
+-- 242ms // 240ms // 223ms - aqui não afeta pois não indexamos o paramento do where(id_empresa)
+
+-- CASE 2
+SELECT n.*, e.*
+FROM nota n inner join estoque e ON
+	 	n.id_empresa = e.id_empresa and
+	 	n.id_planilha = e.id_planilha
+WHERE 	e.dt_movimento = '12/03/2007' and
+		n.id_empresa = 1 and e.id_item = 2821;
+--tempo de exec antes e depois do idx123 e do idx312
+-- 124ms // 48ms // 44ms
+
+-- CASE 3
+SELECT *
+FROM estoque e
+WHERE 	e.dt_movimento = '01/01/2007' and e.id_cfop = 5102 and
+		e.id_item = 2821 and e.vl_unitario > 38;
+--tempo de exec antes e depois do idx123 e index312
+-- 131ms // 53ms //53ms
+
+-- index para otimizar tempo
+CREATE INDEX idx123 ON estoque(dt_movimento, id_cfop, id_item);
+DROP INDEX idx123
+CREATE INDEX idx312 ON estoque(id_item, dt_movimento, id_cfop);
+
+SELECT distinct dt_movimento FROM estoque; -- 1.619
+SELECT distinct id_cfop FROM estoque; -- 23
+SELECT distinct id_item FROM estoque; -- 26.412
+
+/*
+Atividades
+
+1- Qual é a diferença destes dois comandos:
+a) GRANT SELECT, UPDATE ON CLIENTE TO ATENDENTE.
+b) GRANT SELECT, UPDATE ON CLIENTE TO ATENDENTE WITH NO GRANT OPTION.
+R: Na letra a) o grupo/usuario ATENDENTE tem privilegio de Select e Update na tabela Clientes 
+e na letra b) é a mesma coisa da letra a) porém o grupo/usuario ATENDENTE pode dar privilegio 
+para outros usuarios terem o mesmo privilegio recebido no comando.
+
+2- Qual é a finalidades dos comandos a seguir:
+a) ALTER USER ana WITH PASSWORD 'del123';
+R: Alterar a senha do USER ana para del123.
+
+b) CREATE ROLE zzz;
+ CREATE USER www WITH PASSWORD 'senha123';
+ GRANT zzz TO www;
+R: Cria o grupo zzz, depois cria o Usuario www com senha senha123 e depois adiciona usuario www no grupo zzz.
+
+3- Cite três tipos de índices do PostgreSQL?
+R: HASH, BTREE, RTREE.
+
+4- Há vantagens na indexação de chaves primárias no processo de otimização de consultas?
+Por quê?
+R: Sim, auxilia o otimizador de consultas, o PostgreSQL pode usar o índice para escolher planos de execução mais eficientes,
+reduzindo o tempo de resposta.
+
+5- Em uma consulta padrão SQL, quais campos devem ser indexados para ganho
+desempenho?
+R: Devem ser indexados principalmente os campos utilizados nas cláusulas WHERE, JOIN, ORDER BY e GROUP BY, 
+especialmente chaves primárias e estrangeiras, pois esses campos são os mais acessados pelo otimizador de 
+consultas para localizar, relacionar, ordenar e agrupar dados com maior eficiência.
+
+6- Quando criamos um índice composto, sabemos que a seletividade/distinção dos campos
+de uma tabela interfere no processo de otimização de consultas. Descreva um exemplo de
+campos/colunas em uma tabela que podem representar essa técnica.
+R: 
+SELECT * FROM estoque e
+WHERE 	e.dt_movimento = '01/01/2007' and e.id_cfop = 5102 and
+		    e.id_item = 2821 and e.vl_unitario > 38;
+CREATE INDEX idx123 ON estoque(dt_movimento, id_cfop, id_item);
+
+7- Considere as seguintes ferramentas do PostgreSQL:
+• a) pg_restore; b) pg_dumpall; c) pg_dump
+Complete:
+O __________ é utilizado para criar backups de um banco de dados específico. O
+__________ restaura backups gerados nos formatos customizado, diretório ou tar. Já o
+__________ realiza o backup de todos os bancos da instância, incluindo usuários (roles)
+e outros objetos globais
+
+R: 1° pg_dump, 2° pg_restore, 3° pg_dumpall.
+*/
