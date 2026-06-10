@@ -967,7 +967,7 @@ SELECT distinct id_cfop FROM estoque; -- 23
 SELECT distinct id_item FROM estoque; -- 26.412
 
 /*
-Atividades
+Atividades - Revisão
 
 1- Qual é a diferença destes dois comandos:
 a) GRANT SELECT, UPDATE ON CLIENTE TO ATENDENTE.
@@ -1018,3 +1018,89 @@ e outros objetos globais
 
 R: 1° pg_dump, 2° pg_restore, 3° pg_dumpall.
 */
+
+-- ============= Script Aula 11 - 09.06.2026 =============
+
+-- Exemplos Transações 
+CREATE TABLE Banco(
+	conta INTEGER PRIMARY KEY,
+	agencia VARCHAR(10) NOT NULL,
+	saldo NUMERIC(10,2)
+);
+
+INSERT INTO Banco(conta, agencia, saldo)VALUES(2311,'6559-98',900.34),(2229,'5479-99',11.99),(1211,'1004-11',750.00);
+
+SELECT * FROM Banco;
+
+	BEGIN;	-- Inicio de uma transação
+		UPDATE Banco SET saldo = 950 WHERE conta = 2311;
+		SELECT saldo FROM Banco WHERE conta = 2311;
+	COMMIT;
+	ROLLBACK; -- ROLLBACK depois de um commit com sucesso não acontece nada
+
+	BEGIN;
+		UPDATE Banco SET saldo = 999 WHERE conta = 2311;
+		DELETE FROM Banco WHERE conta = 2229;
+		UPDATE Banco SET saldo = 1000 WHERE conta = 2311;
+	ROLLBACK;
+
+-- COM SAVEPOINTs
+	BEGIN;
+		UPDATE Banco SET saldo = 999 WHERE conta = 2311;
+		savepoint s1;
+		DELETE FROM Banco WHERE conta = 2229;
+		savepoint s2;
+		UPDATE Banco SET saldo = 1000 WHERE conta = 2311;
+	ROLLBACK to s1;
+
+-- Transação bloqueada
+	BEGIN;
+		UPDATE Banco SET saldo = 0 WHERE conta = 1211;
+		UPDATE Banco SET saldo = 1000 WHERE contas = 2311; -- ERRO DE SINTAXE, BLOQUEIA TABELA SE DER COMMIT
+	COMMIT;
+
+SELECT * FROM Banco;
+ROLLBACK; -- VOLTA TABELA PARA UM ESTADO ESTAVEL
+
+-- MONGO DB
+
+db.createCollection("selecoes");
+
+db.selecoes.insert(
+    {
+        "id":1,
+        "nome":"Brasil",
+        "titulos":"5",
+        "jogadores":("Everton", "Neymar", "Casemiro","3")
+    }
+);
+
+db.selecoes.insert(
+    {
+        "id":2,
+        "nome":"Argentina",
+        "continente":"America"
+    }
+);
+
+db.selecoes.insert(
+    {
+        "id":3,
+        "nome":"Inglaterra",
+        "continente":"Europa",
+        "titulos":"1",
+        "jogadores":("Kane","Saca","2")
+    }
+);
+-- pesquisar
+db.selecoes.find({id:1,id:3});
+-- atualizar
+db.selecoes.update({id:1},{$set: {participacoes:20, sede:"sim"}});
+-- listar por ordem
+db.getCollection("selecoes").find({}).sort({"id":1});
+-- listar por um continente especifico
+db.selecoes.find({continente:"Europa"});
+--listar por operador logico
+db.selecoes.find({$or:[{id:1},{id:3}]});
+-- listar os continentes sem repetiçoes
+db.getCollection("selecoes").distinct("continente");
